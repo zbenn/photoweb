@@ -8,8 +8,8 @@ import { Navbar } from "@/components/layout/Navbar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "摄影大赛 - 展示你的摄影才华",
-  description: "参加摄影大赛，分享你的精彩瞬间，赢取丰厚奖品！",
+  title: "\"帧\"藏交通摄影大赛",
+  description: "定格流动瞬间，珍藏城市脉搏",
 };
 
 export default function RootLayout({

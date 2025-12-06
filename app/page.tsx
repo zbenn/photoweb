@@ -30,15 +30,15 @@ export default function HomePage() {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-6">
-              捕捉光影，<br className="hidden md:block" />
+              一帧画面，<br className="hidden md:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                定格瞬间
+                一份思考
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
-              2025年春季摄影大赛现已开启。
+              2025-2026学年——“镜观交通”摄影大赛现已开启。
               <br />
-              分享你的视角，赢取丰厚奖品。
+              定格流动瞬间，珍藏城市脉搏。
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link
@@ -69,9 +69,9 @@ export default function HomePage() {
             className="grid md:grid-cols-3 gap-12"
           >
             {[
-              { icon: "📸", title: "多种分类", desc: "人像、风光、纪实、创意、街头、野生动物等多个摄影分类供你选择" },
-              { icon: "👍", title: "公众投票", desc: "所有访客都可以为喜欢的作品点赞，让优秀作品获得更多关注" },
-              { icon: "🏆", title: "专业评审", desc: "专业评委团队打分评选，确保比赛的公平公正性" }
+              { icon: "📸", title: "多种分类", desc: "交通之美、交通之困、交通之变" },
+              { icon: "👍", title: "共享社区", desc: "所有访客都可以为喜欢的作品点赞，让优秀作品获得更多关注" },
+              { icon: "🏆", title: "专业评审", desc: "多维度（交通专家、摄影高手、公众投票）评选，确保比赛的公平公正性" }
             ].map((feature, index) => (
               <motion.div
                 key={index}
@@ -130,7 +130,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto text-center px-4 relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">准备好展示你的作品了吗？</h2>
           <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
-            加入数千名摄影爱好者的行列，让世界看到你的视界。
+            定格瞬间，关照现实，心向未来。加入我们，共同见证交通的变迁与城市的脉动。
           </p>
           <Link
             href="/register"
