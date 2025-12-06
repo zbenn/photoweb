@@ -48,10 +48,10 @@ export default function HomePage() {
                 立即参赛
               </Link>
               <Link
-                href="/gallery"
+                href="/contest/introduction"
                 className="px-8 py-4 bg-white text-foreground border border-gray-200 font-medium rounded-full hover:bg-gray-50 transition-all hover:scale-105 active:scale-95"
               >
-                浏览作品
+                活动详情
               </Link>
             </div>
           </motion.div>
@@ -130,7 +130,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto text-center px-4 relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">准备好展示你的作品了吗？</h2>
           <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
-            定格瞬间，关照现实，心向未来。加入我们，共同见证交通的变迁与城市的脉动。
+            定格瞬间，关照现实，心向未来，共同见证交通变迁与城市脉动。
           </p>
           <Link
             href="/register"

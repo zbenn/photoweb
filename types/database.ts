@@ -28,6 +28,7 @@ export interface Category {
   name: string
   slug: string
   order_idx: number
+  description?: string
 }
 
 export interface Photo {

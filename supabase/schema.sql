@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS categories (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
+  description TEXT,
   order_idx INTEGER NOT NULL DEFAULT 0
 );
 
@@ -244,16 +245,16 @@ CREATE POLICY "评委可以修改自己的评分" ON judge_scores FOR UPDATE USI
 -- =============================================
 
 -- 插入默认分类
-INSERT INTO categories (name, slug, order_idx) VALUES
-  ('人像摄影', 'portrait', 1),
-  ('风光摄影', 'landscape', 2),
-  ('纪实摄影', 'documentary', 3),
-  ('创意摄影', 'creative', 4),
-  ('街头摄影', 'street', 5),
-  ('野生动物', 'wildlife', 6)
-ON CONFLICT (slug) DO NOTHING;
+INSERT INTO categories (name, slug, order_idx, description) VALUES
+  ('交通之美', 'beauty', 1, '展现交通设施的建筑美、交通工具的流线美、交通运行的秩序美等。'),
+  ('交通之痛', 'pain', 2, '关注交通拥堵、事故隐患、不文明行为等交通领域存在的问题。'),
+  ('交通之变', 'change', 3, '记录交通发展变迁、新旧交通方式对比、绿色交通出行等。')
+ON CONFLICT (slug) DO UPDATE 
+SET name = EXCLUDED.name, description = EXCLUDED.description;
 
 -- 插入默认活动 (2025年春季摄影大赛)
+INSERT INTO contests (
+-- 插入默认活动 (镜观交通摄影大赛)
 INSERT INTO contests (
   name,
   description,
@@ -264,17 +265,15 @@ INSERT INTO contests (
   result_publish_at,
   max_photos_per_user
 ) VALUES (
-  '2025年春季摄影大赛',
-  '展示你的摄影才华,分享精彩瞬间!',
-  '2025-12-02 00:00:00+00',
-  '2025-12-31 23:59:59+00',
-  '2026-01-01 00:00:00+00',
-  '2026-01-15 23:59:59+00',
-  '2026-01-20 00:00:00+00',
+  '镜观交通摄影大赛',
+  '定格流动瞬间，珍藏城市脉搏。',
+  '2025-09-01 00:00:00+00',
+  '2026-06-30 23:59:59+00',
+  '2026-07-01 00:00:00+00',
+  '2026-07-15 23:59:59+00',
+  '2026-07-20 00:00:00+00',
   5
 )
-ON CONFLICT DO NOTHING;
-
--- =============================================
+ON CONFLICT DO NOTHING;=========================
 -- 完成!
 -- =============================================
