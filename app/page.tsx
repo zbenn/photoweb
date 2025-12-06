@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useAuthStore } from '@/store/authStore'
+import { useRouter } from 'next/navigation'
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -18,6 +20,17 @@ const staggerContainer = {
 }
 
 export default function HomePage() {
+  const { user } = useAuthStore()
+  const router = useRouter()
+
+  const handleJoinContest = () => {
+    if (user) {
+      router.push('/upload')
+    } else {
+      router.push('/register')
+    }
+  }
+
   return (
     <div className="relative overflow-hidden">
       {/* Hero Section */}
@@ -41,12 +54,12 @@ export default function HomePage() {
               定格流动瞬间，珍藏城市脉搏。
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link
-                href="/register"
+              <button
+                onClick={handleJoinContest}
                 className="px-8 py-4 bg-foreground text-white font-medium rounded-full hover:bg-gray-800 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-gray-200"
               >
                 立即参赛
-              </Link>
+              </button>
               <Link
                 href="/contest/introduction"
                 className="px-8 py-4 bg-white text-foreground border border-gray-200 font-medium rounded-full hover:bg-gray-50 transition-all hover:scale-105 active:scale-95"
