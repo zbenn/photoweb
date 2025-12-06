@@ -7,6 +7,8 @@ import { useAuthStore } from '@/store/authStore'
 import { Photo, Comment } from '@/types/database'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
+import { motion } from 'framer-motion'
+import clsx from 'clsx'
 
 export default function PhotoDetailPage() {
   const params = useParams()
@@ -172,6 +174,27 @@ export default function PhotoDetailPage() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!confirm('确定要删除这张作品吗？此操作无法撤销。')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('photos')
+        .update({ is_deleted: true })
+        .eq('id', params.id)
+
+      if (error) throw error
+
+      toast.success('删除成功')
+      router.push('/my-photos')
+    } catch (error: any) {
+      console.error('删除错误:', error)
+      toast.error('删除失败，请重试')
+    }
+  }
+
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -225,13 +248,19 @@ export default function PhotoDetailPage() {
     return null
   }
 
+  const isOwner = user?.id === photo.user_id
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="grid lg:grid-cols-3 gap-8">
         {/* 左侧: 图片 */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="relative aspect-video bg-gray-100">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="lg:col-span-2"
+        >
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+            <div className="relative aspect-video bg-gray-50">
               <Image
                 src={photo.image_url}
                 alt={photo.title}
@@ -241,48 +270,65 @@ export default function PhotoDetailPage() {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* 右侧: 信息和评论 */}
-        <div className="space-y-6">
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+          className="space-y-6"
+        >
           {/* 作品信息 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              {photo.title}
-            </h1>
+          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-start mb-4">
+              <h1 className="text-2xl font-bold text-foreground">
+                {photo.title}
+              </h1>
+              {isOwner && (
+                <button
+                  onClick={handleDelete}
+                  className="text-red-500 hover:text-red-600 text-sm font-medium px-3 py-1 rounded-full hover:bg-red-50 transition-colors"
+                >
+                  删除作品
+                </button>
+              )}
+            </div>
             
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-semibold">
+            <div className="flex items-center mb-6">
+              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-semibold">
                 {photo.author_name[0].toUpperCase()}
               </div>
               <div className="ml-3">
-                <p className="font-medium text-gray-900">{photo.author_name}</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-medium text-foreground">{photo.author_name}</p>
+                <p className="text-sm text-secondary">
                   {new Date(photo.created_at).toLocaleDateString('zh-CN')}
                 </p>
               </div>
             </div>
 
             {photo.description && (
-              <p className="text-gray-700 mb-4">{photo.description}</p>
+              <p className="text-secondary mb-6 leading-relaxed">{photo.description}</p>
             )}
 
             {/* 点赞按钮 */}
             <button
               onClick={handleLike}
-              className={`w-full py-2 px-4 rounded-lg font-medium transition ${
+              className={clsx(
+                "w-full py-3 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2",
                 isLiked
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                  ? "bg-red-50 text-red-600 border border-red-100"
+                  : "bg-gray-50 text-foreground hover:bg-gray-100 border border-gray-200"
+              )}
             >
-              {isLiked ? '❤️' : '🤍'} {likeCount} 人点赞
+              <span className={isLiked ? "scale-110" : ""}>{isLiked ? '❤️' : '🤍'}</span>
+              <span>{likeCount} 人点赞</span>
             </button>
           </div>
 
           {/* 评论区 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+            <h2 className="text-lg font-bold text-foreground mb-4">
               评论 ({comments.length})
             </h2>
 
@@ -294,22 +340,22 @@ export default function PhotoDetailPage() {
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="写下你的评论..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-2"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all mb-3 resize-none"
                 />
                 <button
                   type="submit"
                   disabled={submittingComment}
-                  className="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2.5 px-4 bg-foreground text-white font-medium rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {submittingComment ? '发送中...' : '发送评论'}
                 </button>
               </form>
             ) : (
-              <div className="mb-6 text-center py-4 bg-gray-50 rounded-lg">
-                <p className="text-gray-600 mb-2">登录后才能评论</p>
+              <div className="mb-6 text-center py-6 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-secondary mb-3">登录后才能评论</p>
                 <button
                   onClick={() => router.push('/login')}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-accent hover:text-accent-hover font-medium"
                 >
                   立即登录
                 </button>
@@ -317,24 +363,26 @@ export default function PhotoDetailPage() {
             )}
 
             {/* 评论列表 */}
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {comments.length === 0 ? (
-                <p className="text-center text-gray-500 py-4">暂无评论</p>
+                <p className="text-center text-secondary py-4">暂无评论</p>
               ) : (
                 comments.map((comment) => (
-                  <div key={comment.id} className="border-b border-gray-200 pb-4 last:border-0">
+                  <div key={comment.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                     <div className="flex items-start">
-                      <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 text-sm font-semibold flex-shrink-0">
                         {comment.profiles?.username?.[0]?.toUpperCase() || '?'}
                       </div>
                       <div className="ml-3 flex-1">
-                        <p className="font-medium text-gray-900">
-                          {comment.profiles?.username || '匿名用户'}
-                        </p>
-                        <p className="text-gray-700 mt-1">{comment.content}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(comment.created_at).toLocaleString('zh-CN')}
-                        </p>
+                        <div className="flex justify-between items-baseline">
+                          <p className="font-medium text-foreground text-sm">
+                            {comment.profiles?.username || '匿名用户'}
+                          </p>
+                          <span className="text-xs text-secondary">
+                            {new Date(comment.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-secondary mt-1 text-sm leading-relaxed">{comment.content}</p>
                       </div>
                     </div>
                   </div>
@@ -342,7 +390,7 @@ export default function PhotoDetailPage() {
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   )

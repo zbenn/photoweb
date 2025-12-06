@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Photo, Category } from '@/types/database'
 import Link from 'next/link'
 import Image from 'next/image'
+import { motion, AnimatePresence } from 'framer-motion'
+import clsx from 'clsx'
 
 export default function GalleryPage() {
   const supabase = createClient()
@@ -94,102 +96,121 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">作品展示</h1>
-        
-        {/* 筛选和排序 */}
-        <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex gap-2">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="mb-12 text-center">
+        <h1 className="text-4xl font-bold text-foreground mb-6 tracking-tight">作品展示</h1>
+        <p className="text-secondary max-w-2xl mx-auto">
+          探索来自世界各地的精彩瞬间，感受摄影的魅力。
+        </p>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+        {/* Categories */}
+        <div className="flex flex-wrap justify-center gap-2">
+          <button
+            onClick={() => setSelectedCategory(null)}
+            className={clsx(
+              "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
+              selectedCategory === null
+                ? "bg-foreground text-white shadow-md"
+                : "bg-white text-secondary hover:bg-gray-100 border border-gray-200"
+            )}
+          >
+            全部
+          </button>
+          {categories.map((category) => (
             <button
-              onClick={() => setSelectedCategory(null)}
-              className={`px-4 py-2 rounded-lg ${
-                selectedCategory === null
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300'
-              }`}
+              key={category.id}
+              onClick={() => setSelectedCategory(category.id)}
+              className={clsx(
+                "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
+                selectedCategory === category.id
+                  ? "bg-foreground text-white shadow-md"
+                  : "bg-white text-secondary hover:bg-gray-100 border border-gray-200"
+              )}
             >
-              全部
+              {category.name}
             </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-lg ${
-                  selectedCategory === cat.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-          
-          <div className="ml-auto flex gap-2">
-            <button
-              onClick={() => setSortBy('latest')}
-              className={`px-4 py-2 rounded-lg ${
-                sortBy === 'latest'
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300'
-              }`}
-            >
-              最新
-            </button>
-            <button
-              onClick={() => setSortBy('popular')}
-              className={`px-4 py-2 rounded-lg ${
-                sortBy === 'popular'
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300'
-              }`}
-            >
-              最热
-            </button>
-          </div>
+          ))}
+        </div>
+
+        {/* Sort */}
+        <div className="flex bg-gray-100 p-1 rounded-lg">
+          <button
+            onClick={() => setSortBy('latest')}
+            className={clsx(
+              "px-4 py-1.5 rounded-md text-sm font-medium transition-all",
+              sortBy === 'latest'
+                ? "bg-white text-foreground shadow-sm"
+                : "text-secondary hover:text-foreground"
+            )}
+          >
+            最新
+          </button>
+          <button
+            onClick={() => setSortBy('popular')}
+            className={clsx(
+              "px-4 py-1.5 rounded-md text-sm font-medium transition-all",
+              sortBy === 'popular'
+                ? "bg-white text-foreground shadow-sm"
+                : "text-secondary hover:text-foreground"
+            )}
+          >
+            最热
+          </button>
         </div>
       </div>
 
-      {/* 作品网格 */}
       {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-          <p className="mt-4 text-gray-600">加载中...</p>
-        </div>
-      ) : photos.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-600">暂无作品</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="aspect-[4/3] bg-gray-200 rounded-2xl animate-pulse" />
+          ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {photos.map((photo) => (
-            <Link
-              key={photo.id}
-              href={`/photo/${photo.id}`}
-              className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition"
-            >
-              <div className="aspect-square relative overflow-hidden bg-gray-100">
-                <Image
-                  src={photo.thumbnail_url || photo.image_url}
-                  alt={photo.title}
-                  fill
-                  className="object-cover group-hover:scale-110 transition duration-300"
-                />
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 truncate">
-                  {photo.title}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  作者: {photo.author_name}
-                </p>
-                <div className="flex items-center mt-2 text-sm text-gray-500">
-                  <span>👍 {photo.like_count || 0}</span>
-                </div>
-              </div>
-            </Link>
-          ))}
+        <motion.div 
+          layout
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+        >
+          <AnimatePresence>
+            {photos.map((photo) => (
+              <motion.div
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                key={photo.id}
+                className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
+              >
+                <Link href={`/photo/${photo.id}`}>
+                  <div className="aspect-[4/3] relative overflow-hidden">
+                    <Image
+                      src={photo.thumbnail_url || photo.image_url}
+                      alt={photo.title}
+                      fill
+                      className="object-cover transform group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-4 group-hover:translate-y-0">
+                      <h3 className="text-lg font-semibold truncate">{photo.title}</h3>
+                      <div className="flex items-center mt-1 text-sm text-gray-200">
+                        <span>❤️ {photo.like_count || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
+      
+      {!loading && photos.length === 0 && (
+        <div className="text-center py-20">
+          <div className="text-6xl mb-4">📷</div>
+          <h3 className="text-xl font-medium text-foreground">暂无作品</h3>
+          <p className="text-secondary mt-2">该分类下暂时没有作品，快来上传第一张吧！</p>
         </div>
       )}
     </div>

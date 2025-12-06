@@ -8,6 +8,8 @@ import { Photo } from '@/types/database'
 import Link from 'next/link'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
+import { motion, AnimatePresence } from 'framer-motion'
+import clsx from 'clsx'
 
 export default function MyPhotosPage() {
   const router = useRouter()
@@ -71,7 +73,7 @@ export default function MyPhotosPage() {
   }
 
   const handleDelete = async (photoId: string) => {
-    if (!confirm('确定要删除这张作品吗？')) {
+    if (!confirm('确定要删除这张作品吗？此操作无法撤销。')) {
       return
     }
 
@@ -96,80 +98,105 @@ export default function MyPhotosPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">我的作品</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-12 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">我的作品</h1>
+          <p className="text-secondary mt-2">管理你上传的所有摄影作品</p>
+        </div>
         <Link
           href="/upload"
-          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700"
+          className="px-6 py-3 bg-foreground text-white font-medium rounded-full hover:bg-gray-800 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-gray-200"
         >
           上传新作品
         </Link>
       </div>
 
       {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-          <p className="mt-4 text-gray-600">加载中...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="aspect-[4/3] bg-gray-100 rounded-2xl animate-pulse" />
+          ))}
         </div>
       ) : photos.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-md">
-          <p className="text-gray-600 mb-4">你还没有上传任何作品</p>
+        <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
+          <div className="text-6xl mb-4">📷</div>
+          <h3 className="text-xl font-medium text-foreground mb-2">你还没有上传任何作品</h3>
+          <p className="text-secondary mb-8">分享你的第一张摄影作品，开始你的创作之旅</p>
           <Link
             href="/upload"
-            className="inline-block px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700"
+            className="inline-block px-8 py-3 bg-accent text-white font-medium rounded-full hover:bg-accent-hover transition-all hover:scale-105 active:scale-95"
           >
             上传第一张作品
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {photos.map((photo) => (
-            <div key={photo.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-              <Link href={`/photo/${photo.id}`} className="block">
-                <div className="aspect-square relative overflow-hidden bg-gray-100">
-                  <Image
-                    src={photo.thumbnail_url || photo.image_url}
-                    alt={photo.title}
-                    fill
-                    className="object-cover hover:scale-110 transition duration-300"
-                  />
+        <motion.div 
+          layout
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+        >
+          <AnimatePresence>
+            {photos.map((photo) => (
+              <motion.div
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                key={photo.id}
+                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
+              >
+                <Link href={`/photo/${photo.id}`} className="block relative overflow-hidden">
+                  <div className="aspect-[4/3] relative bg-gray-100">
+                    <Image
+                      src={photo.thumbnail_url || photo.image_url}
+                      alt={photo.title}
+                      fill
+                      className="object-cover transform group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 right-3">
+                      <span className={clsx(
+                        "px-3 py-1 rounded-full text-xs font-medium backdrop-blur-md shadow-sm",
+                        photo.status === 'public' ? 'bg-green-500/90 text-white' :
+                        photo.status === 'hidden' ? 'bg-yellow-500/90 text-white' :
+                        'bg-red-500/90 text-white'
+                      )}>
+                        {photo.status === 'public' ? '公开' :
+                         photo.status === 'hidden' ? '隐藏' : '已屏蔽'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+                <div className="p-5">
+                  <h3 className="font-semibold text-lg text-foreground truncate mb-3">
+                    {photo.title}
+                  </h3>
+                  <div className="flex items-center justify-between text-sm text-secondary mb-5">
+                    <div className="flex gap-4">
+                      <span className="flex items-center gap-1">❤️ {photo.like_count || 0}</span>
+                      <span className="flex items-center gap-1">💬 {photo.comment_count || 0}</span>
+                    </div>
+                    <span>{new Date(photo.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <Link
+                      href={`/photo/${photo.id}`}
+                      className="flex-1 px-4 py-2 bg-gray-50 text-foreground text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors text-center border border-gray-200"
+                    >
+                      查看
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(photo.id)}
+                      className="px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors border border-red-100"
+                    >
+                      删除
+                    </button>
+                  </div>
                 </div>
-              </Link>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 truncate mb-2">
-                  {photo.title}
-                </h3>
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                  <span>👍 {photo.like_count || 0}</span>
-                  <span>💬 {photo.comment_count || 0}</span>
-                  <span className={`px-2 py-1 rounded text-xs ${
-                    photo.status === 'public' ? 'bg-green-100 text-green-800' :
-                    photo.status === 'hidden' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {photo.status === 'public' ? '公开' :
-                     photo.status === 'hidden' ? '隐藏' : '已屏蔽'}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <Link
-                    href={`/photo/${photo.id}`}
-                    className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 text-center"
-                  >
-                    查看详情
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(photo.id)}
-                    className="px-3 py-2 bg-red-100 text-red-700 text-sm font-medium rounded-md hover:bg-red-200"
-                  >
-                    删除
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
     </div>
   )
