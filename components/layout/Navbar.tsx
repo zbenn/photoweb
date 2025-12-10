@@ -48,7 +48,7 @@ export function Navbar() {
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center text-xl font-semibold tracking-tight text-foreground">
-              <span className="mr-2">📸</span> 摄影大赛
+              <span className="mr-2">📸</span> 镜观交通·交通主题摄影交流活动
             </Link>
             <div className="hidden md:flex items-center space-x-1">
               <NavLink href="/gallery">作品展示</NavLink>

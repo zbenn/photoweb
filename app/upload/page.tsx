@@ -107,7 +107,7 @@ export default function UploadPage() {
     }
 
     if (file.size > 20 * 1024 * 1024) {
-      toast.error('图片大小不能超过 20MB')
+      toast.error('图片大小不能超过 15MB')
       return
     }
 
@@ -140,8 +140,8 @@ export default function UploadPage() {
         toast.error('请只选择图片文件')
         return
       }
-      if (file.size > 20 * 1024 * 1024) {
-        toast.error(`图片 ${file.name} 大小超过 20MB`)
+      if (file.size > 15 * 1024 * 1024) {
+        toast.error(`图片 ${file.name} 大小超过 15MB`)
         return
       }
     }
@@ -546,7 +546,7 @@ export default function UploadPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               选择图片 <span className="text-red-500">*</span>
-              <span className="text-sm text-gray-500 ml-2">(最大 20MB)</span>
+              <span className="text-sm text-gray-500 ml-2">(最大 15MB)</span>
             </label>
             <input
               type="file"
@@ -630,7 +630,7 @@ export default function UploadPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               选择图片 <span className="text-red-500">*</span>
-              <span className="text-sm text-gray-500 ml-2">(4-6 张，每张最大 20MB)</span>
+              <span className="text-sm text-gray-500 ml-2">(4-6 张，每张最大 15MB)</span>
             </label>
             <input
               type="file"

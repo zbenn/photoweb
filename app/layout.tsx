@@ -8,7 +8,7 @@ import { Navbar } from "@/components/layout/Navbar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "摄影大赛",
+  title: "镜观交通摄影大赛",
   description: "展示你的摄影才华，分享精彩瞬间",
 };
 

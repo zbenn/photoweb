@@ -49,7 +49,7 @@ export default function HomePage() {
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
-              2025-2026学年——“镜观交通”摄影大赛现已开启。
+              2025年冬季“镜观交通”摄影大赛现已开启。
               <br />
               定格流动瞬间，珍藏城市脉搏。
             </p>
