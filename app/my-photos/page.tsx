@@ -137,7 +137,37 @@ export default function MyPhotosPage() {
     try {
       console.log('准备删除:', { workId, workType })
       
+      // 辅助函数：从完整 URL 提取存储路径
+      const extractStoragePath = (url: string): string | null => {
+        if (!url) return null
+        
+        // Supabase Storage URL 格式示例:
+        // https://xxx.supabase.co/storage/v1/object/public/photos/user-id/timestamp.jpg
+        const match = url.match(/\/photos\/(.+)$/)
+        return match ? match[1] : null
+      }
+      
+      // 收集需要删除的图片路径
+      const filesToDelete: string[] = []
+      
       if (workType === 'single') {
+        // 获取单幅作品信息
+        const { data: photo } = await supabase
+          .from('photos')
+          .select('image_url, thumbnail_url')
+          .eq('id', workId)
+          .single()
+        
+        if (photo) {
+          const imagePath = extractStoragePath(photo.image_url)
+          if (imagePath) filesToDelete.push(imagePath)
+          
+          const thumbPath = extractStoragePath(photo.thumbnail_url || '')
+          if (thumbPath && thumbPath !== imagePath) {
+            filesToDelete.push(thumbPath)
+          }
+        }
+        
         const { error } = await supabase
           .from('photos')
           .update({ is_deleted: true })
@@ -146,6 +176,36 @@ export default function MyPhotosPage() {
         console.log('删除单幅作品结果:', { error })
         if (error) throw error
       } else {
+        // 获取组照信息
+        const { data: series } = await supabase
+          .from('photo_series')
+          .select('cover_image_url')
+          .eq('id', workId)
+          .single()
+        
+        if (series) {
+          const coverPath = extractStoragePath(series.cover_image_url)
+          if (coverPath) filesToDelete.push(coverPath)
+        }
+        
+        // 获取组照中的所有图片
+        const { data: images } = await supabase
+          .from('photo_series_images')
+          .select('image_url, thumbnail_url')
+          .eq('series_id', workId)
+        
+        if (images) {
+          for (const img of images) {
+            const imgPath = extractStoragePath(img.image_url)
+            if (imgPath) filesToDelete.push(imgPath)
+            
+            const thumbPath = extractStoragePath(img.thumbnail_url || '')
+            if (thumbPath && thumbPath !== imgPath) {
+              filesToDelete.push(thumbPath)
+            }
+          }
+        }
+        
         const { error } = await supabase
           .from('photo_series')
           .update({ is_deleted: true })
@@ -153,6 +213,23 @@ export default function MyPhotosPage() {
 
         console.log('删除组照结果:', { error })
         if (error) throw error
+      }
+      
+      console.log('准备删除的文件:', filesToDelete)
+      
+      // 从 Storage 删除文件
+      if (filesToDelete.length > 0) {
+        const { data: deleteData, error: storageError } = await supabase.storage
+          .from('photos')
+          .remove(filesToDelete)
+        
+        if (storageError) {
+          console.error('删除存储文件错误:', storageError)
+          console.error('错误详情:', JSON.stringify(storageError, null, 2))
+          // 继续执行，即使文件删除失败
+        } else {
+          console.log('存储文件删除成功:', deleteData)
+        }
       }
 
       toast.success('删除成功')

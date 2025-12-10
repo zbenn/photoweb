@@ -201,6 +201,67 @@ export default function PhotoDetailPage() {
     }
 
     try {
+      // 收集需要删除的图片路径
+      const filesToDelete: string[] = []
+      
+      // 辅助函数：从完整 URL 提取存储路径
+      const extractStoragePath = (url: string): string | null => {
+        if (!url) return null
+        
+        // Supabase Storage URL 格式示例:
+        // https://xxx.supabase.co/storage/v1/object/public/photos/user-id/timestamp.jpg
+        const match = url.match(/\/photos\/(.+)$/)
+        return match ? match[1] : null
+      }
+      
+      if (work.type === 'single') {
+        const photo = work.data as Photo
+        
+        const imagePath = extractStoragePath(photo.image_url)
+        if (imagePath) filesToDelete.push(imagePath)
+        
+        const thumbnailPath = extractStoragePath(photo.thumbnail_url || '')
+        if (thumbnailPath && thumbnailPath !== imagePath) {
+          filesToDelete.push(thumbnailPath)
+        }
+      } else {
+        // 组照：删除封面和所有图片
+        const series = work.data as PhotoSeries
+        
+        const coverPath = extractStoragePath(series.cover_image_url)
+        if (coverPath) filesToDelete.push(coverPath)
+        
+        // 删除组照中的所有图片
+        if (work.images) {
+          for (const img of work.images) {
+            const imgPath = extractStoragePath(img.image_url)
+            if (imgPath) filesToDelete.push(imgPath)
+            
+            const thumbPath = extractStoragePath(img.thumbnail_url || '')
+            if (thumbPath && thumbPath !== imgPath) {
+              filesToDelete.push(thumbPath)
+            }
+          }
+        }
+      }
+      
+      console.log('准备删除的文件:', filesToDelete)
+      
+      // 从 Storage 删除文件
+      if (filesToDelete.length > 0) {
+        const { data: deleteData, error: storageError } = await supabase.storage
+          .from('photos')
+          .remove(filesToDelete)
+        
+        if (storageError) {
+          console.error('删除存储文件错误:', storageError)
+          // 继续执行数据库删除，即使文件删除失败
+        } else {
+          console.log('存储文件删除成功:', deleteData)
+        }
+      }
+      
+      // 软删除数据库记录
       const table = work.type === 'single' ? 'photos' : 'photo_series'
       
       const { error } = await supabase
