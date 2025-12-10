@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 
 interface PhotoExportData {
   id: string
+  type: 'single' | 'series'
   title: string
   description: string
   author_name: string
@@ -16,6 +17,7 @@ interface PhotoExportData {
   branch: string
   category_names: string
   image_url: string
+  image_count?: number // 组照图片数量
   created_at: string
   avg_judge_score: number
   like_count: number
@@ -63,7 +65,7 @@ export default function ExportPage() {
     setLoading(true)
 
     try {
-      // 获取作品基本信息
+      // ========== 加载单幅作品 ==========
       const { data: photosData, error: photosError } = await supabase
         .from('photos')
         .select(`
@@ -76,86 +78,184 @@ export default function ExportPage() {
           created_at
         `)
         .eq('contest_id', selectedContest)
+        .eq('type', 'single')
         .eq('is_deleted', false)
         .order('created_at', { ascending: false })
 
       if (photosError) throw photosError
 
+      // ========== 加载组照作品 ==========
+      const { data: seriesData, error: seriesError } = await supabase
+        .from('photo_series')
+        .select(`
+          id,
+          title,
+          description,
+          author_name,
+          user_id,
+          cover_image_url,
+          image_count,
+          created_at
+        `)
+        .eq('contest_id', selectedContest)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false })
+
+      if (seriesError) throw seriesError
+
+      // 合并所有用户 ID
+      const allUserIds = [
+        ...new Set([
+          ...(photosData?.map(p => p.user_id) || []),
+          ...(seriesData?.map(s => s.user_id) || [])
+        ])
+      ]
+
       // 获取所有用户的详细信息
-      const userIds = [...new Set(photosData.map(p => p.user_id))]
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, username, real_name, school, branch')
-        .in('id', userIds)
+        .in('id', allUserIds)
 
       const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || [])
 
-      // 获取分类信息
-      const photoIds = photosData.map(p => p.id)
-      const { data: photoCategoriesData } = await supabase
+      // ========== 处理单幅作品分类 ==========
+      const photoIds = photosData?.map(p => p.id) || []
+      const { data: photoCategoriesData } = photoIds.length > 0 ? await supabase
         .from('photo_categories')
         .select('photo_id, category_id, categories(name)')
-        .in('photo_id', photoIds)
+        .in('photo_id', photoIds) : { data: [] }
 
-      const categoriesMap = new Map<string, string[]>()
+      const photoCategoriesMap = new Map<string, string[]>()
       photoCategoriesData?.forEach(pc => {
-        const existing = categoriesMap.get(pc.photo_id) || []
+        const existing = photoCategoriesMap.get(pc.photo_id) || []
         if (pc.categories) {
           existing.push((pc.categories as any).name)
         }
-        categoriesMap.set(pc.photo_id, existing)
+        photoCategoriesMap.set(pc.photo_id, existing)
       })
 
-      // 获取评委打分
-      const { data: scoresData } = await supabase
+      // ========== 处理组照分类 ==========
+      const seriesIds = seriesData?.map(s => s.id) || []
+      const { data: seriesCategoriesData } = seriesIds.length > 0 ? await supabase
+        .from('photo_series_categories')
+        .select('series_id, category_id, categories(name)')
+        .in('series_id', seriesIds) : { data: [] }
+
+      const seriesCategoriesMap = new Map<string, string[]>()
+      seriesCategoriesData?.forEach(sc => {
+        const existing = seriesCategoriesMap.get(sc.series_id) || []
+        if (sc.categories) {
+          existing.push((sc.categories as any).name)
+        }
+        seriesCategoriesMap.set(sc.series_id, existing)
+      })
+
+      // ========== 处理单幅作品评分 ==========
+      const { data: scoresData } = photoIds.length > 0 ? await supabase
         .from('judge_scores')
         .select('photo_id, score')
-        .in('photo_id', photoIds)
+        .in('photo_id', photoIds) : { data: [] }
 
-      const scoresMap = new Map<string, number[]>()
+      const photoScoresMap = new Map<string, number[]>()
       scoresData?.forEach(score => {
-        const existing = scoresMap.get(score.photo_id) || []
+        const existing = photoScoresMap.get(score.photo_id) || []
         existing.push(score.score)
-        scoresMap.set(score.photo_id, existing)
+        photoScoresMap.set(score.photo_id, existing)
       })
 
-      // 获取点赞数
-      const { data: likesData } = await supabase
+      // ========== 处理组照评分 ==========
+      const { data: seriesScoresData } = seriesIds.length > 0 ? await supabase
+        .from('photo_series_judge_scores')
+        .select('series_id, score')
+        .in('series_id', seriesIds) : { data: [] }
+
+      const seriesScoresMap = new Map<string, number[]>()
+      seriesScoresData?.forEach(score => {
+        const existing = seriesScoresMap.get(score.series_id) || []
+        existing.push(score.score)
+        seriesScoresMap.set(score.series_id, existing)
+      })
+
+      // ========== 处理单幅作品点赞 ==========
+      const { data: likesData } = photoIds.length > 0 ? await supabase
         .from('likes')
         .select('photo_id')
-        .in('photo_id', photoIds)
+        .in('photo_id', photoIds) : { data: [] }
 
-      const likesMap = new Map<string, number>()
+      const photoLikesMap = new Map<string, number>()
       likesData?.forEach(like => {
-        likesMap.set(like.photo_id, (likesMap.get(like.photo_id) || 0) + 1)
+        photoLikesMap.set(like.photo_id, (photoLikesMap.get(like.photo_id) || 0) + 1)
       })
 
-      // 组合数据
-      const exportData: PhotoExportData[] = photosData.map(photo => {
+      // ========== 处理组照点赞 ==========
+      const { data: seriesLikesData } = seriesIds.length > 0 ? await supabase
+        .from('photo_series_likes')
+        .select('series_id')
+        .in('series_id', seriesIds) : { data: [] }
+
+      const seriesLikesMap = new Map<string, number>()
+      seriesLikesData?.forEach(like => {
+        seriesLikesMap.set(like.series_id, (seriesLikesMap.get(like.series_id) || 0) + 1)
+      })
+
+      // ========== 组合单幅作品数据 ==========
+      const photoExportData: PhotoExportData[] = (photosData || []).map(photo => {
         const userProfile = profilesMap.get(photo.user_id)
-        const scores = scoresMap.get(photo.id) || []
+        const scores = photoScoresMap.get(photo.id) || []
         const avgScore = scores.length > 0 
           ? scores.reduce((a, b) => a + b, 0) / scores.length 
           : 0
 
         return {
           id: photo.id,
+          type: 'single',
           title: photo.title,
           description: photo.description || '',
           author_name: photo.author_name,
           real_name: userProfile?.real_name || '',
           school: userProfile?.school || '',
           branch: userProfile?.branch || '',
-          category_names: (categoriesMap.get(photo.id) || []).join(', '),
+          category_names: (photoCategoriesMap.get(photo.id) || []).join(', '),
           image_url: photo.image_url,
           created_at: photo.created_at,
           avg_judge_score: Math.round(avgScore * 100) / 100,
-          like_count: likesMap.get(photo.id) || 0,
+          like_count: photoLikesMap.get(photo.id) || 0,
         }
       })
 
-      setPhotos(exportData)
-      toast.success(`已加载 ${exportData.length} 张作品`)
+      // ========== 组合组照数据 ==========
+      const seriesExportData: PhotoExportData[] = (seriesData || []).map(series => {
+        const userProfile = profilesMap.get(series.user_id)
+        const scores = seriesScoresMap.get(series.id) || []
+        const avgScore = scores.length > 0 
+          ? scores.reduce((a, b) => a + b, 0) / scores.length 
+          : 0
+
+        return {
+          id: series.id,
+          type: 'series',
+          title: series.title,
+          description: series.description || '',
+          author_name: series.author_name,
+          real_name: userProfile?.real_name || '',
+          school: userProfile?.school || '',
+          branch: userProfile?.branch || '',
+          category_names: (seriesCategoriesMap.get(series.id) || []).join(', '),
+          image_url: series.cover_image_url,
+          image_count: series.image_count,
+          created_at: series.created_at,
+          avg_judge_score: Math.round(avgScore * 100) / 100,
+          like_count: seriesLikesMap.get(series.id) || 0,
+        }
+      })
+
+      // 合并并按时间排序
+      const allExportData = [...photoExportData, ...seriesExportData]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+      setPhotos(allExportData)
+      toast.success(`已加载 ${allExportData.length} 件作品（${photoExportData.length} 单幅 + ${seriesExportData.length} 组照）`)
     } catch (error: any) {
       console.error('加载数据错误:', error)
       toast.error(error.message || '加载失败')
@@ -173,6 +273,7 @@ export default function ExportPage() {
     // CSV 表头
     const headers = [
       '作品ID',
+      '作品类型',
       '作品标题',
       '作品描述',
       '昵称',
@@ -180,6 +281,7 @@ export default function ExportPage() {
       '学校',
       '团支部/党支部',
       '分类',
+      '图片数量',
       '评委平均分',
       '点赞数',
       '上传时间',
@@ -189,6 +291,7 @@ export default function ExportPage() {
     // CSV 数据行
     const rows = photos.map(photo => [
       photo.id,
+      photo.type === 'single' ? '单幅' : '组照',
       `"${photo.title.replace(/"/g, '""')}"`,
       `"${photo.description.replace(/"/g, '""')}"`,
       `"${photo.author_name}"`,
@@ -196,6 +299,7 @@ export default function ExportPage() {
       `"${photo.school}"`,
       `"${photo.branch}"`,
       `"${photo.category_names}"`,
+      photo.type === 'series' ? photo.image_count : 1,
       photo.avg_judge_score,
       photo.like_count,
       new Date(photo.created_at).toLocaleString('zh-CN'),
@@ -279,6 +383,9 @@ export default function ExportPage() {
                     作品
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    类型
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     昵称
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -307,6 +414,15 @@ export default function ExportPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{photo.title}</div>
                       <div className="text-sm text-gray-500">{photo.id.slice(0, 8)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        photo.type === 'single' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {photo.type === 'single' ? '单幅' : `组照 ${photo.image_count}张`}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {photo.author_name}

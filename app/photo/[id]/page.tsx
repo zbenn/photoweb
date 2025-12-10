@@ -20,7 +20,7 @@ export default function PhotoDetailPage() {
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
-  const { user } = useAuthStore()
+  const { user, profile } = useAuthStore()
   
   const [work, setWork] = useState<WorkData | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
@@ -256,6 +256,31 @@ export default function PhotoDetailPage() {
     }
   }
 
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm('确定要删除这条评论吗？')) {
+      return
+    }
+
+    if (!work) return
+
+    try {
+      const table = work.type === 'single' ? 'comments' : 'photo_series_comments'
+      
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq('id', commentId)
+
+      if (error) throw error
+
+      toast.success('评论已删除')
+      loadComments(work.type)
+    } catch (error: any) {
+      console.error('删除评论错误:', error)
+      toast.error('删除失败，请重试')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -269,6 +294,8 @@ export default function PhotoDetailPage() {
   }
 
   const isOwner = user && work.data.user_id === user.id
+  const isAdmin = profile?.role === 'admin'
+  const canDelete = isOwner || isAdmin
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -381,10 +408,11 @@ export default function PhotoDetailPage() {
                   作者: {work.data.author_name}
                 </p>
               </div>
-              {isOwner && (
+              {canDelete && (
                 <button
                   onClick={handleDelete}
                   className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                  title={isAdmin && !isOwner ? '管理员删除' : '删除作品'}
                 >
                   删除
                 </button>
@@ -448,34 +476,48 @@ export default function PhotoDetailPage() {
 
             {/* 评论列表 */}
             <div className="space-y-6">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    {comment.profiles?.avatar_url ? (
-                      <Image
-                        src={comment.profiles.avatar_url}
-                        alt={comment.profiles?.username || '用户'}
-                        width={40}
-                        height={40}
-                        className="rounded-full"
-                      />
-                    ) : (
-                      <span className="text-gray-600">👤</span>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-gray-900">
-                        {comment.profiles?.username || '匿名用户'}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {new Date(comment.created_at).toLocaleString('zh-CN')}
-                      </span>
+              {comments.map((comment) => {
+                const isCommentOwner = user && comment.user_id === user.id
+                const canDeleteComment = isCommentOwner || isAdmin
+
+                return (
+                  <div key={comment.id} className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                      {comment.profiles?.avatar_url ? (
+                        <Image
+                          src={comment.profiles.avatar_url}
+                          alt={comment.profiles?.username || '用户'}
+                          width={40}
+                          height={40}
+                          className="rounded-full"
+                        />
+                      ) : (
+                        <span className="text-gray-600">👤</span>
+                      )}
                     </div>
-                    <p className="text-gray-700">{comment.content}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-gray-900">
+                          {comment.profiles?.username || '匿名用户'}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {new Date(comment.created_at).toLocaleString('zh-CN')}
+                        </span>
+                        {canDeleteComment && (
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="ml-auto text-sm text-red-600 hover:text-red-700 hover:underline"
+                            title={isAdmin && !isCommentOwner ? '管理员删除' : '删除评论'}
+                          >
+                            删除
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-gray-700">{comment.content}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
 
               {comments.length === 0 && (
                 <p className="text-center text-gray-500 py-8">暂无评论，快来抢沙发吧！</p>
