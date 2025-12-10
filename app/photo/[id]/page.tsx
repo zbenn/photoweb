@@ -256,7 +256,7 @@ export default function PhotoDetailPage() {
     }
   }
 
-  const handleDeleteComment = async (commentId: string) => {
+  const handleDeleteComment = async (commentId: number) => {
     if (!confirm('确定要删除这条评论吗？')) {
       return
     }
