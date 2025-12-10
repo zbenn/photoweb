@@ -36,6 +36,7 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
+      // 注册用户 - metadata 会被触发器用来创建 profile
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -52,20 +53,7 @@ export default function RegisterPage() {
       if (error) throw error
 
       if (data.user) {
-        // 创建用户资料
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            username: formData.username,
-            real_name: formData.realName,
-            school: formData.school,
-            branch: formData.branch,
-            role: 'participant',
-          })
-
-        if (profileError) throw profileError
-
+        // 触发器会自动创建 profile，无需手动插入
         toast.success('注册成功！正在跳转...')
         setTimeout(() => {
           router.push('/gallery')

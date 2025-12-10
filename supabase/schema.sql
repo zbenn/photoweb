@@ -171,7 +171,8 @@ ALTER TABLE judge_scores ENABLE ROW LEVEL SECURITY;
 
 -- profiles 策略
 CREATE POLICY "用户可以查看所有 profile" ON profiles FOR SELECT USING (true);
-CREATE POLICY "用户可以更新自己的 profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "用户可以创建自己的 profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "用户可以更新自己的 profile" ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
 -- contests 策略
 CREATE POLICY "所有人可以查看活动" ON contests FOR SELECT USING (true);
