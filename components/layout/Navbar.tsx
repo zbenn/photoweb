@@ -60,7 +60,10 @@ export function Navbar() {
                     <NavLink href="/judge" activeClass="text-purple-600">评委打分</NavLink>
                   )}
                   {profile?.role === 'admin' && (
-                    <NavLink href="/admin">管理后台</NavLink>
+                    <>
+                      <NavLink href="/admin">管理后台</NavLink>
+                      <NavLink href="/admin/export">数据导出</NavLink>
+                    </>
                   )}
                 </>
               )}

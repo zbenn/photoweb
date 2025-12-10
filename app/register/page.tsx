@@ -11,7 +11,10 @@ export default function RegisterPage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
+    realName: '',
     username: '',
+    school: '',
+    branch: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -39,6 +42,9 @@ export default function RegisterPage() {
         options: {
           data: {
             username: formData.username,
+            real_name: formData.realName,
+            school: formData.school,
+            branch: formData.branch,
           },
         },
       })
@@ -46,6 +52,20 @@ export default function RegisterPage() {
       if (error) throw error
 
       if (data.user) {
+        // 创建用户资料
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            username: formData.username,
+            real_name: formData.realName,
+            school: formData.school,
+            branch: formData.branch,
+            role: 'participant',
+          })
+
+        if (profileError) throw profileError
+
         toast.success('注册成功！正在跳转...')
         setTimeout(() => {
           router.push('/gallery')
@@ -76,8 +96,23 @@ export default function RegisterPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
+              <label htmlFor="realName" className="block text-sm font-medium text-gray-700 mb-1">
+                真实姓名 <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="realName"
+                name="realName"
+                type="text"
+                required
+                value={formData.realName}
+                onChange={(e) => setFormData({ ...formData, realName: e.target.value })}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="请输入真实姓名"
+              />
+            </div>
+            <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                用户名
+                昵称（网页显示名） <span className="text-red-500">*</span>
               </label>
               <input
                 id="username"
@@ -87,12 +122,42 @@ export default function RegisterPage() {
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="请输入用户名"
+                placeholder="请输入昵称"
+              />
+            </div>
+            <div>
+              <label htmlFor="school" className="block text-sm font-medium text-gray-700 mb-1">
+                学校 <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="school"
+                name="school"
+                type="text"
+                required
+                value={formData.school}
+                onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="请输入学校名称"
+              />
+            </div>
+            <div>
+              <label htmlFor="branch" className="block text-sm font-medium text-gray-700 mb-1">
+                团支部/党支部 <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="branch"
+                name="branch"
+                type="text"
+                required
+                value={formData.branch}
+                onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="请输入团支部/党支部名称"
               />
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                邮箱地址
+                邮箱地址 <span className="text-red-500">*</span>
               </label>
               <input
                 id="email"
@@ -108,7 +173,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                密码
+                密码 <span className="text-red-500">*</span>
               </label>
               <input
                 id="password"
@@ -124,7 +189,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                确认密码
+                确认密码 <span className="text-red-500">*</span>
               </label>
               <input
                 id="confirmPassword"

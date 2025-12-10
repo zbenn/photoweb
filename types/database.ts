@@ -3,6 +3,9 @@ export type UserRole = 'participant' | 'judge' | 'admin'
 export interface Profile {
   id: string
   username: string
+  real_name?: string
+  school?: string
+  branch?: string
   avatar_url?: string
   role: UserRole
   created_at: string

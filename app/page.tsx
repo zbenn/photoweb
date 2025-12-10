@@ -84,7 +84,7 @@ export default function HomePage() {
             {[
               { icon: "📸", title: "多种分类", desc: "交通之美、交通之困、交通之变" },
               { icon: "👍", title: "共享社区", desc: "所有访客都可以为喜欢的作品点赞，让优秀作品获得更多关注" },
-              { icon: "🏆", title: "专业评审", desc: "多维度（交通专家、摄影高手、公众投票）评选，确保比赛的公平公正性" }
+              { icon: "🏆", title: "专业评审", desc: "多维度评选，确保比赛的公平公正及趣味性" }
             ].map((feature, index) => (
               <motion.div
                 key={index}
@@ -112,10 +112,11 @@ export default function HomePage() {
             
             <div className="grid md:grid-cols-4 gap-8 relative z-10">
               {[
-                { date: "12.02 - 12.31", title: "作品征集", color: "bg-blue-500" },
-                { date: "01.01 - 01.15", title: "公众投票", color: "bg-green-500" },
-                { date: "01.16 - 01.19", title: "评委评审", color: "bg-purple-500" },
-                { date: "01.20", title: "结果公布", color: "bg-red-500" }
+                { date: "12.12 - 01.18", title: "作品征集", color: "bg-blue-500" },
+                { date: "12.12 - 01.23", title: "公众投票", color: "bg-green-500" },
+                { date: "01.23 - 01.29", title: "评委评审", color: "bg-purple-500" },
+                { date: "02.01", title: "结果公布", color: "bg-red-500" },
+                { date: "后续主题赛事", title: "春节特别档，敬请期待！", color: "bg-red-500"}
               ].map((item, index) => (
                 <motion.div
                   key={index}

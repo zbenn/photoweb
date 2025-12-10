@@ -135,13 +135,25 @@ export default function UploadPage() {
     setLoading(true)
 
     try {
-      // 1. 压缩图片
-      toast.loading('正在压缩图片...')
-      const compressedFile = await imageCompression(formData.file, {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-      })
+      let fileToUpload = formData.file
+
+      // 1. 只有在文件大于 20MB 时才压缩
+      if (formData.file.size > 20 * 1024 * 1024) {
+        toast.loading('图片过大，正在压缩...')
+        fileToUpload = await imageCompression(formData.file, {
+          maxSizeMB: 20,
+          maxWidthOrHeight: 4096,
+          useWebWorker: true,
+        })
+      } else if (formData.file.size > 5 * 1024 * 1024) {
+        // 对于 5MB-20MB 的图片，适度压缩以加快上传速度
+        toast.loading('正在优化图片...')
+        fileToUpload = await imageCompression(formData.file, {
+          maxSizeMB: 10,
+          maxWidthOrHeight: 3840,
+          useWebWorker: true,
+        })
+      }
 
       // 2. 上传到 Supabase Storage
       const fileExt = formData.file.name.split('.').pop()
@@ -150,7 +162,7 @@ export default function UploadPage() {
       toast.loading('正在上传图片...')
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('photos')
-        .upload(fileName, compressedFile)
+        .upload(fileName, fileToUpload)
 
       if (uploadError) throw uploadError
 
@@ -170,7 +182,7 @@ export default function UploadPage() {
           author_name: profile.username,
           image_url: publicUrl,
           thumbnail_url: publicUrl,
-          file_size: compressedFile.size,
+          file_size: fileToUpload.size,
           status: 'public',
         })
         .select()
