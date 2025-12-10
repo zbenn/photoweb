@@ -46,6 +46,8 @@ export interface Photo {
   file_size: number
   width?: number
   height?: number
+  type: 'single' | 'series'
+  series_id?: string
   status: 'public' | 'hidden' | 'blocked'
   created_at: string
   updated_at: string
@@ -57,6 +59,41 @@ export interface Photo {
   like_count?: number
   comment_count?: number
   avg_score?: number
+}
+
+export interface PhotoSeries {
+  id: string
+  contest_id: string
+  user_id: string
+  title: string
+  description: string
+  author_name: string
+  cover_image_url: string
+  image_count: number
+  status: 'public' | 'hidden' | 'blocked'
+  created_at: string
+  updated_at: string
+  is_deleted: boolean
+  
+  // 关联数据
+  profiles?: Profile
+  categories?: Category[]
+  images?: PhotoSeriesImage[]
+  like_count?: number
+  comment_count?: number
+  avg_score?: number
+}
+
+export interface PhotoSeriesImage {
+  id: string
+  series_id: string
+  image_url: string
+  thumbnail_url?: string
+  file_size: number
+  width?: number
+  height?: number
+  order_idx: number
+  created_at: string
 }
 
 export interface Like {

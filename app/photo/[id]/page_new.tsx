@@ -33,13 +33,10 @@ export default function PhotoDetailPage() {
 
   useEffect(() => {
     loadWork()
-  }, [params.id])
-
-  useEffect(() => {
-    if (work && user) {
+    if (user) {
       checkIfLiked()
     }
-  }, [work, user])
+  }, [params.id, user])
 
   const loadWork = async () => {
     setLoading(true)
