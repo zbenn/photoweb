@@ -177,11 +177,15 @@ export default function MyPhotosPage() {
         if (error) throw error
       } else {
         // 获取组照信息
-        const { data: series } = await supabase
+        const { data: series, error: seriesError } = await supabase
           .from('photo_series')
           .select('cover_image_url')
           .eq('id', workId)
           .single()
+        
+        if (seriesError) {
+          console.error('获取组照信息错误:', seriesError)
+        }
         
         if (series) {
           const coverPath = extractStoragePath(series.cover_image_url)
@@ -189,10 +193,14 @@ export default function MyPhotosPage() {
         }
         
         // 获取组照中的所有图片
-        const { data: images } = await supabase
+        const { data: images, error: imagesError } = await supabase
           .from('photo_series_images')
           .select('image_url, thumbnail_url')
           .eq('series_id', workId)
+        
+        if (imagesError) {
+          console.error('获取组照图片信息错误:', imagesError)
+        }
         
         if (images) {
           for (const img of images) {
@@ -206,13 +214,19 @@ export default function MyPhotosPage() {
           }
         }
         
-        const { error } = await supabase
+        console.log('执行组照软删除...')
+        const { error, data: updateData } = await supabase
           .from('photo_series')
           .update({ is_deleted: true })
           .eq('id', workId)
+          .select()
 
-        console.log('删除组照结果:', { error })
+        console.log('删除组照结果:', { error, updateData })
         if (error) throw error
+        
+        if (!updateData || updateData.length === 0) {
+          throw new Error('无法更新组照记录，可能权限不足')
+        }
       }
       
       console.log('准备删除的文件:', filesToDelete)
