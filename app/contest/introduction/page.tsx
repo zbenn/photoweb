@@ -183,10 +183,10 @@ export default function ContestIntroductionPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {[
-                    { stage: "作品征集", time: "2024.12.12 – 2025.01.18", content: "向社会公开征集作品" },
-                    { stage: "公众点赞", time: "2024.12.12 – 2025.01.23", content: "对优秀作品开启线上点赞（若总作品数较多，会依据此进行入围筛选，不带入评分）" },
-                    { stage: "评委评审", time: "2025.01.23 – 2025.01.29", content: "专家维度评分、多模态模型评分" },
-                    { stage: "结果公布", time: "2025.02.01", content: "公布最终获奖名单" },
+                    { stage: "作品征集", time: "2025.12.15 – 2026.01.18", content: "向各个参赛单位公开征集作品" },
+                    { stage: "公众点赞", time: "2025.12.15 – 2026.01.23", content: "对优秀作品开启线上点赞（若总作品数较多，会依据此进行入围筛选，不带入评分）" },
+                    { stage: "评委评审", time: "2026.01.23 – 2026.01.29", content: "专家维度评分、多模态模型评分" },
+                    { stage: "结果公布", time: "2026.02.01", content: "公布最终获奖名单" },
                     { stage: "后续赛事", time: "春节特别档", content: "敬请期待更多主题系列活动" }
                   ].map((item, index) => (
                     <tr key={index} className="hover:bg-gray-50 transition-colors">

@@ -112,8 +112,8 @@ export default function HomePage() {
             
             <div className="grid md:grid-cols-4 gap-8 relative z-10">
               {[
-                { date: "12.12 - 01.18", title: "作品征集", color: "bg-blue-500" },
-                { date: "12.12 - 01.23", title: "公众投票", color: "bg-green-500" },
+                { date: "12.15 - 01.18", title: "作品征集", color: "bg-blue-500" },
+                { date: "12.15 - 01.23", title: "公众投票", color: "bg-green-500" },
                 { date: "01.23 - 01.29", title: "评委评审", color: "bg-purple-500" },
                 { date: "02.01", title: "结果公布", color: "bg-red-500" },
                 { date: "后续主题赛事", title: "春节特别档，敬请期待！", color: "bg-red-500"}
